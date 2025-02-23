@@ -72,7 +72,7 @@ setup_rdp() {
     echo "Finalizing"
     adduser "$username" chrome-remote-desktop
     curl -s -L -k -o xfce-shapes.svg https://raw.githubusercontent.com/The-Disa1a/Cloud-Shell-GCRD/refs/heads/main/Wall/xfce-shapes.svg
-    mv xfce-shapes.svg /usr/share/backgrounds/xfce/
+    sudo mv xfce-shapes.svg /usr/share/backgrounds/xfce/
     echo "Wallpaper Changed"
     
     su - "$username" -c "$CRD --pin=$Pin"
