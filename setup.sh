@@ -1,111 +1,87 @@
 #!/bin/bash
 
-# Ask for CRD SSH Code
-read -p "Enter Chrome Remote Desktop SSH Code: " CRD_SSH_Code
+# Set DEBIAN_FRONTEND to noninteractive to suppress prompts
+export DEBIAN_FRONTEND=noninteractive
 
-# Set default values
-username="disala"
-password="root"
-Pin="123456"
-
-# Autostart is set to true
-Autostart=true
-
-# Function to install Chrome Remote Desktop
-installCRD() {
-  wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
-  dpkg --install chrome-remote-desktop_current_amd64.deb
-  apt install --assume-yes --fix-broken
-  echo "Chrome Remote Desktop Installed"
-}
-
-# Function to install Desktop Environment
-installDesktopEnvironment() {
-  export DEBIAN_FRONTEND=noninteractive
-  apt install --assume-yes xfce4 desktop-base xfce4-terminal
-  echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" > /etc/chrome-remote-desktop-session
-  apt remove --assume-yes gnome-terminal
-  apt install --assume-yes xscreensaver
-  sudo apt purge light-locker
-  sudo apt install --reinstall xfce4-screensaver
-  systemctl disable lightdm.service
-  echo "XFCE4 Desktop Environment Installed"
-}
-
-# Function to install Google Chrome
-installGoogleChrome() {
-  wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  dpkg --install google-chrome-stable_current_amd64.deb
-  apt install --assume-yes --fix-broken
-  echo "Google Chrome Installed"
-}
-
-# Function to install Telegram
-installTelegram() {
-  apt install --assume-yes telegram-desktop
-  echo "Telegram Installed"
-}
-
-# Function to change wallpaper
-changeWallpaper() {
-  curl -s -L -k -o xfce-verticals.png https://gitlab.com/chamod12/changewallpaper-win10/-/raw/main/CachedImage_1024_768_POS4.jpg
-  mv xfce-verticals.png /usr/share/backgrounds/xfce/
-  echo "Wallpaper Changed"
-}
-
-# Function to install Qbittorrent
-installQbittorrent() {
-  sudo apt update
-  sudo apt install -y qbittorrent
-  echo "Qbittorrent Installed"
-}
-
-# Create new user
-useradd -m $username
-adduser $username sudo
-echo "$username:$password" | sudo chpasswd
-sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd
-
-# Install necessary components
-apt update
-installCRD
-installDesktopEnvironment
-changeWallpaper
-installGoogleChrome
-installTelegram
-installQbittorrent
-
-# Autostart configuration
-if $Autostart ; then
-  mkdir -p /home/$username/.config/autostart
-  link="www.youtube.com/@The_Disala"
-  echo "[Desktop Entry]
-Type=Application
-Name=Colab
-Exec=sh -c \"sensible-browser $link\"
-Icon=
-Comment=Open a predefined notebook at session signin.
-X-GNOME-Autostart-enabled=true" > /home/$username/.config/autostart/colab.desktop
-  chmod +x /home/$username/.config/autostart/colab.desktop
-  chown $username:$username /home/$username/.config
+# Check if the script is run as root
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
 fi
 
-# Add user to chrome-remote-desktop group and start the service
-adduser $username chrome-remote-desktop
-su - $username -c "$CRD_SSH_Code --pin=$Pin"
-service chrome-remote-desktop start
+# Function to create user
+create_user() {
+    echo "Creating User and Setting it up"
+    username="disala"
+    password="root"
+    Pin="123456"
+    
+    useradd -m "$username"
+    adduser "$username" sudo
+    echo "$username:$password" | sudo chpasswd
+    sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd
 
-# Display final information
-echo "..................................................................."
-echo "Brought By The Disala"
-echo "..................................................................."
-echo "Log in PIN : $Pin"
-echo "User Name : $username"
-echo "User Pass : $password"
-echo "One-time Password : $(openssl rand -base64 12)"
-echo "..................................................................."
-echo "Youtube Video Tutorial - https://youtu.be/xqpCQCJXKxU"
-echo "..................................................................."
+    # Add PATH update to .bashrc of the new user
+    echo 'export PATH=$PATH:/home/user/.local/bin' >> /home/"$username"/.bashrc
+    su - "$username" -c "source ~/.bashrc"
 
-# Keep script running
-while true; do sleep 1000; done
+    echo "User '$username' created and configured."
+}
+
+# Extra storage setup
+setup_storage() {
+    mkdir -p /storage
+    chmod 777 /storage
+    chown "$username":"$username" /storage
+    mkdir -p /home/"$username"/storage
+    mount --bind /storage /home/"$username"/storage
+}
+
+# Function to install and configure RDP
+setup_rdp() {
+    echo "Installing Firefox ESR"
+    add-apt-repository ppa:mozillateam/ppa -y  
+    apt update
+    apt install --assume-yes firefox-esr
+    apt install --assume-yes dbus-x11 dbus 
+
+    echo "Installing dependencies"
+    apt update
+    add-apt-repository universe -y
+    apt install --assume-yes xvfb xserver-xorg-video-dummy xbase-clients python3-packaging python3-psutil python3-xdg libgbm1 libutempter0 libfuse2 nload qbittorrent ffmpeg gpac fonts-lklug-sinhala
+
+    echo "Installing Desktop Environment"
+    apt install --assume-yes xfce4 desktop-base xfce4-terminal xfce4-session
+    echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" > /etc/chrome-remote-desktop-session
+    apt remove --assume-yes gnome-terminal
+    apt install --assume-yes xscreensaver
+    systemctl disable lightdm.service
+
+    echo "Installing Chrome Remote Desktop"
+    wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+    dpkg --install chrome-remote-desktop_current_amd64.deb
+    apt install --assume-yes --fix-broken
+
+    echo "Finalizing"
+    adduser "$username" chrome-remote-desktop
+    
+    echo "Please visit http://remotedesktop.google.com/headless and copy the command after Authentication"
+    read -p "Paste the CRD command here: " CRP
+
+    su - "$username" -c "$CRP --pin=$Pin"
+    service chrome-remote-desktop start
+    setup_storage "$username"
+
+    echo "RDP setup completed"
+}
+
+# Execute functions
+create_user
+setup_rdp
+
+# Keep-alive loop
+echo "Starting keep-alive loop. Press Ctrl+C to stop."
+while true; do
+    echo "I'm alive"
+    sleep 300  # Sleep for 5 minutes
+done
