@@ -1,0 +1,1 @@
+Run this in Google Cloud Shell '''sudo apt update && sudo apt install -y dos2unix && curl -sL https://raw.githubusercontent.com/The-Disa1a/Cloud-Shell-GCRD/refs/heads/main/setup.sh -o setup.sh && dos2unix setup.sh && sudo bash setup.sh'''
