@@ -41,6 +41,11 @@ setup_storage() {
 
 # Function to install and configure RDP
 setup_rdp() {
+    echo "Google Chrome Installing"
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    dpkg --install google-chrome-stable_current_amd64.deb
+    apt install --assume-yes --fix-broken
+    
     echo "Installing Firefox ESR"
     add-apt-repository ppa:mozillateam/ppa -y  
     apt update
