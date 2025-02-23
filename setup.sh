@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Load the values from the user_input.txt file
-source user_input.txt
+# Ask for CRD SSH Code
+read -p "Enter Chrome Remote Desktop SSH Code: " CRD_SSH_Code
+
+# Set default values
+username="disala"
+password="root"
+Pin="123456"
 
 # Autostart is set to true
 Autostart=true
@@ -61,7 +66,7 @@ adduser $username sudo
 echo "$username:$password" | sudo chpasswd
 sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd
 
-# Install CRD, Desktop Environment, Google Chrome, Telegram, Wallpaper, and Qbittorrent
+# Install necessary components
 apt update
 installCRD
 installDesktopEnvironment
@@ -97,6 +102,7 @@ echo "..................................................................."
 echo "Log in PIN : $Pin"
 echo "User Name : $username"
 echo "User Pass : $password"
+echo "One-time Password : $(openssl rand -base64 12)"
 echo "..................................................................."
 echo "Youtube Video Tutorial - https://youtu.be/xqpCQCJXKxU"
 echo "..................................................................."
