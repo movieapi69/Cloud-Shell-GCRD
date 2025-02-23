@@ -11,6 +11,8 @@ fi
 
 # Function to create user
 create_user() {
+    echo "Please visit http://remotedesktop.google.com/headless and copy the command after Authentication"
+    read -p "Paste the CRD SSH command here: " CRD
     echo "Creating User and Setting it up"
     username="disala"
     password="root"
@@ -64,11 +66,8 @@ setup_rdp() {
 
     echo "Finalizing"
     adduser "$username" chrome-remote-desktop
-    
-    echo "Please visit http://remotedesktop.google.com/headless and copy the command after Authentication"
-    read -p "Paste the CRD command here: " CRP
 
-    su - "$username" -c "$CRP --pin=$Pin"
+    su - "$username" -c "$CRD --pin=$Pin"
     service chrome-remote-desktop start
     setup_storage "$username"
 
