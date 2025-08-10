@@ -87,9 +87,3 @@ setup_rdp() {
 create_user
 setup_rdp
 
-# Keep-alive loop
-echo "Starting keep-alive loop. Press Ctrl+C to stop."
-while true; do
-    echo "I'm alive"
-    sleep 300  # Sleep for 5 minutes
-done
